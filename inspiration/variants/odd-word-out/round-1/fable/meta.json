@@ -1,0 +1,15 @@
+{
+ "seat": "fable",
+ "variants": [
+  {
+   "id": "a",
+   "name": "Phase posters",
+   "description": "Each phase is one full-bleed flat colour with black ink, Unbounded headlines, a strict 24px grid, square corners and a single black bar button; vote is a 2x3 tile grid."
+  },
+  {
+   "id": "b",
+   "name": "Paper ledger",
+   "description": "Warm off-white paper with a thin coloured phase stripe; Fraunces display type and DM Mono labels; clues, votes and heart changes are set as ruled tables with numbered steps."
+  }
+ ]
+}

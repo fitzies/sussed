@@ -1,0 +1,4 @@
+{"seat": "opus", "variants": [
+ {"id": "a", "name": "Card table", "description": "Light linen backdrop with ivory, textured role cards in a stacked deck, hold-to-peek pad, list-based clues, votes and heart ledger."},
+ {"id": "b", "name": "Night table", "description": "Dark felt table where everything is a card: room pass, roles flipped in or out, word pulled from a sleeve, clues as a wallet stack, vote by pulling a card from a fanned hand."}
+]}

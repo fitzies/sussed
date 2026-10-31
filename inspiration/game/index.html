@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<title>Odd Word Out</title>
+<link rel="icon" href="data:,">
+<style>
+@font-face{font-family:'Unbounded';font-weight:400 800;font-display:block;src:url(fonts/unbounded.woff2) format('woff2')}
+@font-face{font-family:'Bricolage Grotesque';font-weight:400 800;font-display:block;src:url(fonts/bricolage.woff2) format('woff2')}
+@font-face{font-family:'Instrument Sans';font-weight:400 700;font-display:swap;src:url(fonts/instrument.woff2) format('woff2')}
+@font-face{font-family:'DM Mono';font-weight:500;font-display:swap;src:url(fonts/dmmono.woff2) format('woff2')}
+
+@property --bg{syntax:'<color>';inherits:true;initial-value:#111111}
+@property --ink{syntax:'<color>';inherits:true;initial-value:#F4F1EA}
+:root{--bg:#111111;--ink:#F4F1EA;transition:--bg .8s cubic-bezier(.4,0,.2,1),--ink .8s cubic-bezier(.4,0,.2,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+html{background:var(--bg);transition:background-color .8s cubic-bezier(.4,0,.2,1)}
+body{background:var(--bg);color:var(--ink);font:18px/1.25 'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  transition:background-color .8s cubic-bezier(.4,0,.2,1),color .8s cubic-bezier(.4,0,.2,1);overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit;background:none;border:0;border-radius:0}
+button{cursor:pointer;touch-action:manipulation}
+button:disabled{cursor:default}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+
+#screen{max-width:480px;margin:0 auto;min-height:100dvh;padding:calc(22px + env(safe-area-inset-top)) 24px calc(22px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+#screen.leave{animation:out .26s ease forwards}
+#screen.enter{animation:in .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes out{to{opacity:0;transform:translateY(-14px)}}
+@keyframes in{from{opacity:0;transform:translateY(18px)}}
+
+.rail{display:flex;justify-content:space-between;align-items:center;min-height:28px;font:500 13px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
+.lab{font:500 13px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
+.h{font-family:'Unbounded',sans-serif;font-weight:800;letter-spacing:-.035em;line-height:.92;overflow-wrap:anywhere}
+.word{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.045em;line-height:.9;overflow-wrap:anywhere}
+.grow{flex:1 1 auto}
+.push{margin-top:auto}
+.rule{border-top:2px solid var(--ink)}
+
+.btn{height:66px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 24px;background:var(--ink);color:var(--bg);
+  font:700 19px 'Unbounded',sans-serif;letter-spacing:-.01em;transition:transform .12s ease,opacity .2s}
+.btn:active:not(:disabled){transform:scale(.98)}
+.btn:disabled{opacity:.35}
+.btn.line{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.btn.small{height:48px;font-size:15px;padding:0 16px;width:auto}
+.wait{height:66px;display:flex;align-items:center;justify-content:center;border:2px dashed var(--ink);font:500 14px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
+
+.hearts{display:inline-flex;gap:4px;vertical-align:middle}
+.av{display:block;flex:none}
+.row{display:flex;align-items:center;gap:12px;min-height:58px;border-bottom:2px solid var(--ink)}
+.nm{font-weight:700;font-size:19px}
+.tag{font:500 11px 'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.err{min-height:22px;margin-top:10px;font:500 14px 'DM Mono',monospace;letter-spacing:.04em;color:#FF6A4D}
+
+/* home */
+.motif{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0 30px}
+.motif div{aspect-ratio:1;background:#FFD60A;display:grid;place-items:center}
+.motif div.odd{background:#FF4B2B;transform:rotate(-7deg)}
+@media (prefers-reduced-motion:no-preference){.motif div.odd{animation:nudge 3.2s ease-in-out infinite}}
+@keyframes nudge{0%,70%,100%{transform:rotate(-7deg)}78%{transform:rotate(5deg) translateY(-6px)}86%{transform:rotate(-10deg)}}
+.field{display:block;margin-top:22px}
+.field input{display:block;width:100%;height:58px;border-bottom:2px solid var(--ink);font:700 26px 'Unbounded',sans-serif;letter-spacing:-.02em;outline:none}
+.field input::placeholder{color:var(--ink);opacity:.3}
+.joinrow{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:10px}
+.joinrow input{height:66px;border:2px solid var(--ink);padding:0 16px;font:800 26px 'Unbounded',sans-serif;letter-spacing:.12em;text-transform:uppercase;outline:none;width:100%}
+.joinrow input::placeholder{color:var(--ink);opacity:.3;letter-spacing:.06em}
+.or{display:flex;align-items:center;gap:12px;margin:22px 0 4px}
+.or::before,.or::after{content:"";flex:1;border-top:2px solid var(--ink);opacity:.25}
+
+/* lobby */
+.code{font-size:min(21vw,96px);margin:6px 0 0 -4px;white-space:nowrap}
+.ptiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.pt{position:relative;height:74px;border:2px solid var(--ink);display:flex;align-items:center;gap:12px;padding:0 12px;animation:pop .35s cubic-bezier(.2,.9,.3,1.3) both}
+.pt.off{opacity:.45}
+.pt.empty{border-style:dashed;opacity:.4;animation:none}
+.pt.add{border-style:dashed;justify-content:center;font:700 16px 'Unbounded',sans-serif;gap:8px;animation:none}
+.pt .x{position:absolute;top:2px;right:2px;width:30px;height:30px;display:grid;place-items:center;opacity:.6}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 14px}
+.opt{border:2px solid var(--ink);padding:12px 14px;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:84px;justify-content:space-between}
+.opt.on{background:var(--ink);color:var(--bg)}
+.opt .h{font-size:28px}
+
+/* secret card */
+.peek{position:relative;flex:1 1 auto;margin:18px 0;border:2px solid var(--ink);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none;min-height:340px;cursor:pointer}
+.peek .closed{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font:700 22px 'Unbounded',sans-serif;transition:opacity .15s}
+.face{position:absolute;inset:-2px;padding:22px;display:flex;flex-direction:column;opacity:0;transition:opacity .15s;background:#5AE08C;color:#111}
+.face.imp{background:#FF4B2B;color:#fff}
+.peek.open .face{opacity:1}
+.peek.open .closed{opacity:0}
+.face .word{font-size:min(15vw,66px);margin-top:10px}
+.face .h{margin-top:10px}
+
+/* talk */
+.timer{font-size:min(30vw,124px);margin:12px 0 18px -4px;font-variant-numeric:tabular-nums}
+.num{font:500 13px 'DM Mono',monospace;width:22px}
+.me{outline:0;background:color-mix(in srgb,var(--ink) 10%,transparent)}
+
+/* vote */
+.vtiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 16px}
+.vt{position:relative;border:2px solid var(--ink);min-height:118px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;transition:background-color .2s,color .2s,transform .12s}
+.vt:active:not(:disabled){transform:scale(.97)}
+.vt.sel{background:var(--ink);color:var(--bg)}
+.vt.sel svg.av text{fill:var(--ink)}
+.vt .tick{position:absolute;top:12px;right:12px}
+
+/* result */
+.boxes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.box{border:2px solid var(--ink);padding:10px 12px}
+.box .h{font-size:21px;margin-top:6px}
+.box.wide{grid-column:span 2}
+.strike{text-decoration:line-through;text-decoration-thickness:3px}
+.stamp{background:var(--ink);color:var(--bg);font:700 15px 'Unbounded',sans-serif;padding:8px 12px;transform:rotate(-4deg);white-space:nowrap}
+@media (prefers-reduced-motion:no-preference){.stamp{animation:stamp .5s .35s cubic-bezier(.2,.9,.3,1.4) both}}
+@keyframes stamp{from{transform:rotate(-4deg) scale(2.2);opacity:0}}
+.delta{font:800 18px 'Unbounded',sans-serif;width:34px;text-align:right}
+
+@media (prefers-reduced-motion:reduce){#screen.leave,#screen.enter{animation-duration:.01ms}}
+@media (min-height:900px){#screen{padding-top:40px}}
+</style>
+</head>
+<body>
+<main id="screen" aria-live="polite"></main>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const PH = {home:['#111111','#F4F1EA'], lobby:['#FFD60A','#111111'], secret:['#111111','#F4F1EA'], talk:['#6CC8FF','#111111'],
+  vote:['#FF8E3C','#111111'], guess:['#FF4B2B','#FFFFFF'], result:['#FF7DB8','#111111'], over:['#5AE08C','#111111']};
+const SHAPE = ['<circle cx="24" cy="24" r="22"/>','<path d="M24 3 46 44H2z"/>','<rect x="3" y="3" width="42" height="42"/>','<path d="M24 2 46 24 24 46 2 24z"/>',
+  '<path d="M24 2l19 11v22L24 46 5 35V13z"/>','<path d="M2 24a22 22 0 0 1 44 0v21H2z"/>','<path d="M24 2 46 18 38 46H10L2 18z"/>','<rect x="3" y="3" width="42" height="42" rx="13"/>'];
+const LETTER_Y = [31,38,31,31,31,33,33,31];
+const HEART = 'M12 21s-7.5-4.6-9.6-9.4C.9 8.2 3.2 4 7.2 4c2 0 3.6 1.1 4.8 2.8C13.2 5.1 14.8 4 16.8 4c4 0 6.3 4.2 4.8 7.6C19.5 16.4 12 21 12 21z';
+const I = {
+  eye: '<svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>',
+  arrow: '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>',
+  tick: '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l5 5L20 6" fill="none" stroke="currentColor" stroke-width="3"/></svg>',
+  plus: '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.6"/></svg>',
+  x: '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19" stroke="currentColor" stroke-width="2.6"/></svg>',
+  ghost: '<svg width="22" height="22" viewBox="0 0 24 24" role="img" aria-label="Ghost"><path d="M5 21V10a7 7 0 0 1 14 0v11l-2.3-1.6L14.3 21 12 19.4 9.7 21l-2.4-1.6z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9.5" cy="10.5" r="1.3" fill="currentColor"/><circle cx="14.5" cy="10.5" r="1.3" fill="currentColor"/></svg>',
+  share: '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v8h14v-8" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>',
+};
+const av = (p, size = 42) => p ? `<svg class="av" width="${size}" height="${size}" viewBox="0 0 48 48" aria-hidden="true"><g fill="currentColor">${SHAPE[p.shape % 8]}</g>
+  <text x="24" y="${LETTER_Y[p.shape % 8]}" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="${p.shape % 8 === 1 ? 16 : 20}" fill="var(--bg)">${esc(p.name[0].toUpperCase())}</text></svg>` : '';
+const hearts = (n, size = 16) => n === 0 ? I.ghost : `<span class="hearts" role="img" aria-label="${n} hearts">${[0,1,2].map(i =>
+  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path d="${HEART}" fill="${i < n ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>`).join('')}</span>`;
+
+/* ---------------- session + network ---------------- */
+let S = JSON.parse(localStorage.getItem('oddword') || 'null');   // {code, pid}
+let unloading = false; addEventListener('pagehide', () => { unloading = true; });
+let V = null, es = null, offset = 0, holding = false, pickVote = null, err = '', lastKey = '', busy = false;
+const qsRoom = (new URLSearchParams(location.search).get('room') || '').toUpperCase().slice(0, 4);
+
+async function api(action, extra = {}) {
+  const res = await fetch('/api', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action, ...(S || {}), ...extra})});
+  const out = await res.json().catch(() => ({error: 'Connection problem'}));
+  if (out.error) { err = out.error; render(); }
+  return out;
+}
+function connect() {
+  if (es) es.close();
+  es = new EventSource(`/events?code=${encodeURIComponent(S.code)}&pid=${encodeURIComponent(S.pid)}`);
+  es.onmessage = e => { V = JSON.parse(e.data); offset = V.serverNow - Date.now(); err = ''; render(); };
+  es.onerror = async () => {
+    if (unloading || es.readyState !== 2) return;            // the browser retries on its own while readyState is 0
+    const r = await fetch('/api', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action: 'check', ...S})}).then(x => x.json()).catch(() => null);
+    if (r && r.error) leave(); else setTimeout(() => { if (S) connect(); }, 2000);
+  };
+}
+function leave() { if (es) es.close(); es = null; S = null; V = null; localStorage.removeItem('oddword'); history.replaceState(null, '', '/'); render(); }
+async function enter(action, name, code) {
+  if (busy) return; busy = true;
+  const out = await api(action, {name, code});
+  busy = false;
+  if (out.pid) { S = {code: out.code, pid: out.pid}; localStorage.setItem('oddword', JSON.stringify(S)); history.replaceState(null, '', '/?room=' + out.code); connect(); }
+}
+
+/* ---------------- screens ---------------- */
+const me = () => V.players.find(p => p.id === V.meId);
+const P = id => V.players.find(p => p.id === id);
+const isHost = () => V.hostId === V.meId;
+const left = () => V.deadline ? Math.max(0, Math.ceil((V.deadline - (Date.now() + offset)) / 1000)) : 0;
+const clock = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const rail = right => `<div class="rail"><span>Round ${V.round}/${V.rounds}</span><span>${right}</span></div>`;
+const hostBtn = (label, action) => isHost() ? `<button class="btn" data-act="${action}">${label} ${I.arrow}</button>` : `<div class="wait">Waiting for host</div>`;
+
+function faceHTML(card) {
+  if (!card) return '';
+  return card.imposter
+    ? `<div class="face imp"><div class="lab">${esc(card.category)}</div><div class="push"><div class="lab">You are the</div><div class="h" style="font-size:min(13vw,58px)">Imposter</div>
+        <div class="lab" style="margin-top:28px">Hint</div><div class="h" style="font-size:min(9vw,40px)">${esc(card.hint)}.</div></div>
+        <div class="push rule" style="border-color:currentColor"></div><div class="lab" style="margin-top:16px">Clue about</div><div class="h" style="font-size:min(10vw,44px)">${esc(card.angle)}</div></div>`
+    : `<div class="face"><div class="lab">${esc(card.category)}</div><div class="push"><div class="lab">Your word</div><div class="word">${esc(card.word)}</div></div>
+        <div class="push rule" style="border-color:currentColor"></div><div class="lab" style="margin-top:16px">Clue about</div><div class="h" style="font-size:min(10vw,44px)">${esc(card.angle)}</div></div>`;
+}
+
+const screens = {
+  home() {
+    const tiles = [0,1,2,3,4,5].map(i => `<div class="${i === 4 ? 'odd' : ''}" style="color:#111;--bg:${i === 4 ? '#FF4B2B' : '#FFD60A'}">${av({shape: [0,1,2,3,4,5][i], name: i === 4 ? '?' : ' '}, 46)}</div>`).join('');
+    return `<div class="rail"><span>3–10 phones</span><a href="/how-to-play.html" class="lab" style="color:inherit;min-height:44px;display:flex;align-items:center">How to play</a></div>
+      <div class="motif" aria-hidden="true">${tiles}</div>
+      <h1 class="h" style="font-size:min(15vw,66px)">Odd Word Out</h1>
+      <label class="field"><span class="lab">Your name</span><input id="name" maxlength="14" autocomplete="nickname" placeholder="Name" value="${esc(localStorage.getItem('oddword-name') || '')}"></label>
+      <div class="push" style="padding-top:22px">
+        ${qsRoom ? '' : `<button class="btn" data-act="create">Create room ${I.arrow}</button><div class="or lab">or join</div>`}
+        <div class="joinrow"><input id="code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Code" aria-label="Room code" value="${esc(qsRoom)}">
+          <button class="btn ${qsRoom ? '' : 'line'}" style="width:auto" data-act="join">Join</button></div>
+        <p class="err" role="alert">${esc(err)}</p>
+      </div>`;
+  },
+  lobby() {
+    const host = isHost();
+    const tiles = V.players.map(p => `<div class="pt ${p.online ? '' : 'off'}">${av(p, 40)}<div><div class="nm">${esc(p.name)}</div>
+        <div class="tag">${p.id === V.hostId ? 'Host' : p.bot ? 'Bot' : p.id === V.meId ? 'You' : ''}</div></div>
+        ${host && p.id !== V.meId ? `<button class="x" data-act="kick" data-id="${p.id}" aria-label="Remove ${esc(p.name)}">${I.x}</button>` : ''}</div>`);
+    if (host && V.players.length < 10) tiles.push(`<button class="pt add" data-act="addBot">${I.plus} Bot</button>`);
+    while (tiles.length < 6) tiles.push('<div class="pt empty" aria-hidden="true"></div>');
+    const s = V.settings, n = V.players.length;
+    return `<div class="rail"><span>Room</span><button class="lab" data-act="share" style="display:flex;gap:8px;align-items:center;min-height:44px">${I.share} Invite</button></div>
+      <div class="h code">${esc(V.code)}</div>
+      <div class="lab" style="margin-top:22px">Players · ${n}</div>
+      <div class="ptiles">${tiles.join('')}</div>
+      <div class="opts">
+        <button class="opt" data-act="rounds" ${host ? '' : 'disabled'}><span class="h">${s.rounds}</span><span class="lab">Rounds</span></button>
+        <button class="opt ${s.echo ? 'on' : ''}" data-act="echo" ${host ? '' : 'disabled'} aria-pressed="${s.echo}"><span class="h">${s.echo ? 'On' : 'Off'}</span><span class="lab">Echo role</span></button>
+      </div>
+      <div class="push">${host ? `<button class="btn" data-act="start" ${n < 3 ? 'disabled' : ''}>${n < 3 ? 'Need 3 players' : 'Start'} ${I.arrow}</button>` : '<div class="wait">Waiting for host</div>'}</div>`;
+  },
+  secret() {
+    const ready = V.ready.includes(V.meId);
+    return `${rail(V.ghost ? 'Ghost' : hearts(me().hearts))}
+      <div class="peek ${holding ? 'open' : ''}" id="peek" role="button" tabindex="0" aria-label="Hold to see your card">
+        <div class="closed">${I.eye}<span>Hold to see</span></div>${faceHTML(V.card)}</div>
+      ${ready ? `<div class="wait">Ready · ${V.ready.length}/${V.players.length}</div>` : `<button class="btn" data-act="ready">Ready ${I.arrow}</button>`}`;
+  },
+  talk() {
+    const rows = V.order.map((id, i) => { const p = P(id); return p ? `<div class="row ${id === V.meId ? 'me' : ''}"><span class="num">${String(i + 1).padStart(2, '0')}</span>${av(p, 36)}
+      <span class="nm">${esc(p.name)}</span><span style="margin-left:auto" class="tag">${id === V.meId ? 'You' : ''}</span>${p.hearts === 0 ? I.ghost : ''}</div>` : ''; }).join('');
+    return `${rail('Talk')}<div class="h timer" data-left>${clock(left())}</div>
+      <div class="lab" style="margin-bottom:8px">Clues out loud, in order</div><div class="rule">${rows}</div>
+      <div class="push" style="padding-top:18px">${isHost() ? `<button class="btn" data-act="skip">Vote now ${I.arrow}</button>` : '<div class="wait">Vote next</div>'}</div>`;
+  },
+  vote() {
+    const ghost = V.ghost, locked = !!V.myVote, sel = V.myVote || pickVote;
+    const tiles = V.voters.filter(id => id !== V.meId).map(id => { const p = P(id); return `<button class="vt ${sel === id ? 'sel' : ''}" data-act="pick" data-id="${id}" ${ghost || locked ? 'disabled' : ''} aria-pressed="${sel === id}">
+      ${av(p, 42)}${sel === id ? `<span class="tick">${I.tick}</span>` : ''}<span class="nm">${esc(p.name)}</span></button>`; });
+    return `${rail(`${V.voted.length}/${V.voters.length} voted`)}<div class="h timer" data-left>${clock(left())}</div>
+      <div class="vtiles">${tiles.join('')}</div>
+      <div class="push">${ghost ? '<div class="wait">Ghosts can’t vote</div>' : locked ? '<div class="wait">Voted</div>' :
+        `<button class="btn" data-act="lock" ${pickVote ? '' : 'disabled'}>Vote ${I.arrow}</button>`}</div>`;
+  },
+  guess() {
+    const p = P(V.caughtId);
+    if (V.caughtId === V.meId) return `${rail('Caught')}<div class="h" style="font-size:min(14vw,60px);margin-top:28px">Last chance</div>
+      <label class="field"><span class="lab">Guess the word</span><input id="guess" maxlength="30" autocomplete="off" placeholder="Word"></label>
+      <div class="h" data-left style="font-size:44px;margin-top:22px">${clock(left())}</div>
+      <div class="push"><button class="btn" data-act="guess">Guess ${I.arrow}</button></div>`;
+    return `${rail('Caught')}<div class="push">${av(p, 96)}<div class="h" style="font-size:min(14vw,60px);margin-top:20px">${esc(p.name)}</div>
+      <div class="lab" style="margin-top:12px">is guessing the word</div></div>
+      <div class="h push" data-left style="font-size:64px">${clock(left())}</div>`;
+  },
+  result() {
+    const r = V.reveal, imp = P(r.imposterId), echo = P(r.echoId);
+    const stamp = !r.caught ? 'Escaped' : r.guessCorrect ? 'Guessed it' : 'Caught';
+    const rows = V.players.map(p => { const d = r.deltas[p.id] || 0; return `<div class="row">${av(p, 34)}<span class="nm">${esc(p.name)}</span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:12px">${hearts(p.hearts)}<span class="delta">${d > 0 ? '+1' : d < 0 ? '−1' : ''}</span></span></div>`; }).join('');
+    return `${rail(esc(r.category))}<div class="lab" style="margin-top:18px">Imposter</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:6px"><div class="h" style="font-size:min(17vw,76px)">${esc(imp ? imp.name : '?')}</div><span class="stamp">${stamp}</span></div>
+      <div class="boxes"><div class="box"><div class="lab">Word</div><div class="h">${esc(r.word)}</div></div>
+        <div class="box"><div class="lab">Their guess</div><div class="h ${r.guess && !r.guessCorrect ? 'strike' : ''}">${r.guess ? esc(r.guess) : '–'}</div></div>
+        ${echo ? `<div class="box wide"><div class="lab">${esc(echo.name)} was the Echo</div><div class="h">${esc(r.echoWord)}</div></div>` : ''}</div>
+      <div class="rule">${rows}</div>
+      <div class="push" style="padding-top:18px">${hostBtn(V.round >= V.rounds ? 'Final scores' : 'Next round', 'next')}</div>`;
+  },
+  over() {
+    const rk = V.ranking, win = P(rk[0].id);
+    const rows = rk.map((x, i) => { const p = P(x.id); return `<div class="row"><span class="num">${String(i + 1).padStart(2, '0')}</span>${av(p, 34)}<span class="nm">${esc(p.name)}</span>
+      <span style="margin-left:auto">${hearts(x.hearts)}</span></div>`; }).join('');
+    return `<div class="rail"><span>Game over</span><span>${V.rounds} rounds</span></div>
+      <div class="lab" style="margin-top:22px">Winner</div><div style="display:flex;align-items:center;gap:16px;margin-top:8px">${av(win, 64)}<div class="h" style="font-size:min(16vw,70px)">${esc(win.name)}</div></div>
+      <div class="rule" style="margin-top:24px">${rows}</div>
+      <div class="push" style="display:grid;gap:10px;padding-top:18px">${isHost() ? `<button class="btn" data-act="start">Play again ${I.arrow}</button><button class="btn line" data-act="lobby">Change players</button>` : '<div class="wait">Waiting for host</div>'}</div>`;
+  },
+};
+
+/* ---------------- render with transitions ---------------- */
+const scr = $('#screen');
+function render() {
+  const phase = V ? V.phase : 'home';
+  const [bg, ink] = PH[phase];
+  document.documentElement.style.setProperty('--bg', bg); document.documentElement.style.setProperty('--ink', ink);
+  document.querySelector('meta[name=theme-color]').content = bg;
+  if (phase !== 'vote') pickVote = null;
+  const key = phase + (V ? V.round : '');
+  const html = screens[phase]();
+  if (key === lastKey) { patch(html); return; }
+  const first = !lastKey; lastKey = key; holding = false;
+  if (first) { scr.innerHTML = html; scr.className = 'enter'; afterRender(); return; }
+  scr.className = 'leave';
+  setTimeout(() => { if (lastKey !== key) return; scr.innerHTML = screens[phase](); scr.className = ''; void scr.offsetWidth; scr.className = 'enter'; afterRender(); window.scrollTo(0, 0); }, 240);
+}
+function patch(html) {
+  const a = document.activeElement, id = a && a.id, val = a && a.value, ss = a && a.selectionStart;
+  const keep = {}; scr.querySelectorAll('input[id]').forEach(i => keep[i.id] = i.value);
+  scr.innerHTML = html;
+  for (const [k, v] of Object.entries(keep)) { const i = document.getElementById(k); if (i) i.value = v; }
+  if (id) { const n = document.getElementById(id); if (n) { n.focus(); if (val != null && n.setSelectionRange) try { n.setSelectionRange(ss, ss); } catch (e) {} } }
+  afterRender();
+}
+function afterRender() {
+  const peek = $('#peek');
+  const on = () => { holding = true; peek.classList.add('open'); if (navigator.vibrate) navigator.vibrate(10); };
+  [peek].forEach(el => { if (!el) return;
+    el.addEventListener('pointerdown', e => { e.preventDefault(); on(); });
+    el.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); on(); } });
+    el.addEventListener('keyup', off); el.addEventListener('contextmenu', e => e.preventDefault());
+  });
+  const ci = $('#code'); if (ci) ci.addEventListener('input', () => { ci.value = ci.value.toUpperCase().replace(/[^A-Z]/g, ''); });
+}
+function off() { if (!holding) return; holding = false; const p = $('#peek'); if (p) p.classList.remove('open'); }
+addEventListener('pointerup', off); addEventListener('pointercancel', off); addEventListener('blur', off);
+
+/* ---------------- actions ---------------- */
+scr.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const act = b.dataset.act; err = '';
+  const name = () => { const n = ($('#name') || {}).value || ''; localStorage.setItem('oddword-name', n.trim()); return n; };
+  switch (act) {
+    case 'create': return enter('create', name());
+    case 'join': return enter('join', name(), ($('#code') || {}).value);
+    case 'share': {
+      const url = `${location.origin}/?room=${V.code}`;
+      if (navigator.share) { try { await navigator.share({title: 'Odd Word Out', text: `Join my game: ${V.code}`, url}); } catch (e) {} }
+      else { try { await navigator.clipboard.writeText(url); b.lastChild.textContent = ' Copied'; } catch (e) { prompt('Copy this link', url); } }
+      return;
+    }
+    case 'rounds': return api('settings', {rounds: {3: 5, 5: 7, 7: 3}[V.settings.rounds]});
+    case 'echo': return api('settings', {echo: !V.settings.echo});
+    case 'kick': return api('kick', {target: b.dataset.id});
+    case 'pick': pickVote = b.dataset.id; return patch(screens.vote());
+    case 'lock': return api('vote', {target: pickVote});
+    case 'guess': return api('guess', {word: ($('#guess') || {}).value});
+    default: return api(act);
+  }
+});
+scr.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (e.target.id === 'guess') $('[data-act=guess]').click();
+  if (e.target.id === 'code' || (e.target.id === 'name' && qsRoom)) $('[data-act=join]').click();
+  else if (e.target.id === 'name') $('[data-act=create]').click();
+});
+setInterval(() => { if (!V || !V.deadline) return; const t = clock(left()); document.querySelectorAll('[data-left]').forEach(el => { if (el.textContent !== t) el.textContent = t; }); }, 250);
+
+if (S && (!qsRoom || qsRoom === S.code)) connect(); else { S = null; render(); }
+</script>
+</body>
+</html>
